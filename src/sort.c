@@ -14,7 +14,7 @@ void sort_merge_merge(int *arr, int p, int q, int r)
 	int i = 0, j = 0;
 	for (int k = p; k <= r; k++)
 	{
-		arr[k] = (left[i] < right[j]) ? left[i++] : arr[j++];
+		arr[k] = (left[i] < right[j]) ? left[i++] : right[j++];
 	}
 }
 /* Merge sort. */

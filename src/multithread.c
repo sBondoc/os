@@ -16,27 +16,42 @@ void *sort_merge_multithread(void *args)
 	if (p < r)
 	{
 		int q = (p + r) / 2;
-		bool thread_spawned = false;
-		pthread_t t;
-		args_cast->r = q;
-		if ((*threads_active) < max_threads)
+		struct ArgsSortMerge args_left =
 		{
-			if (pthread_create(&t, NULL, &sort_merge_multithread, (void *) args_cast) == 0)
-			{
-				thread_spawned = true;
-			}
-			else
-			{
-				fprintf(stderr, "Failed to create new pthread.\n");
-				sort_merge_multithread((void *) args_cast);
-			}
+			.arr = arr,
+			.p = p,
+			.r = q,
+			.threads_active = threads_active,
+			.max_threads = max_threads,
+		};
+		pthread_t t;
+		bool thread_spawned = false;
+		if
+		(
+			(*threads_active < max_threads) &&
+			(pthread_create(&t, NULL, sort_merge_multithread, (void *) &args_left) == 0)
+		)
+		{
+			thread_spawned = true;
+			(*threads_active)++;
 		}
-		args_cast->p = q + 1;
-		args_cast->r = r;
-		sort_merge_multithread((void *) args_cast);
+		else
+		{
+			sort_merge_multithread((void *) &args_left);
+		}
+		struct ArgsSortMerge args_right =
+		{
+			.arr = arr,
+			.p = q + 1,
+			.r = r,
+			.threads_active = threads_active,
+			.max_threads = max_threads,
+		};
+		sort_merge_multithread((void *) &args_right);
 		if (thread_spawned)
 		{
 			pthread_join(t, NULL);
+			(*threads_active)--;
 		}
 		sort_merge_merge(arr, p, q, r);
 	}
